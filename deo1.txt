@@ -1,0 +1,200 @@
+# ----------------------------------------------------------------
+# ll_total.py - THE SHADOW CODE EDITION
+# IN HONOR OF ANONYMOUS TERMUX DEVS & THE KIRKMAN PROTOCOL
+# \U0001F422 "Festina Lente - Žuri polako kroz faktore" \U0001F422 
+# \U0001F422 "Let the code speak where the face is hidden" \U0001F422
+#\data\data\com.termux\files\home\myenv\bin\python
+#-*-coding-8-*-
+ 
+import sys
+import time
+import os
+import math
+import random
+import fractions
+import multiprocessing
+import gmpy2
+import sympy
+from gmpy2 import mpz
+from gmpy2 import mpq
+from sympy import factorint
+from sympy import factor_gaussian
+
+
+# [BLOK 1] KONFIGURACIJA I LIMITI
+
+try: 
+    sys.set_int_max_str_digits(0)
+except:
+    pass
+sys.setrecursionlimit(10000)
+TIMEOUT_SEC=300
+BROJ_JEZGRI=4
+
+
+# [BLOK 2] GMPY2 ENGINE
+
+KORISTI_GMPY2=False
+try:
+    import gmpy2
+    from gmpy2 import mpz
+    gmpy2.get_context().precision=8192
+    KORISTI_GMPY2=True
+except ImportError: 
+    class MockGMPY2:
+        def __init__(self):
+            self.context=self
+            self.precision=53
+        def get_context(self):
+            return self
+        def mpz(self,x):
+            return int(x)
+        def is_prime(self,x):
+            if x<2:
+                return False
+            if x in(2,3):
+                return True
+            if x%2==0:
+                return False
+            r=0
+            d=x-1
+            while d%2==0:
+                r+=1
+                d//=2
+            for _ in range(5):
+                a=random.randint(2,x-2)
+                x_pow=pow(a,d,x)
+                if x_pow==x-1:
+                    continue
+                for _ in range(r-1):
+                    x_pow=pow(x_pow,2,x)
+                    if x_pow==x-1:
+                        break        
+                else:
+                    return False
+            return True
+        def next_prime(self,x):
+            x=int(x)+1
+            while not self.is_prime(x):
+                x+=1
+            return x
+        def is_square(self,x):
+            if x<0:
+                return False
+            return math.isqrt(x)**2==x
+        def isqrt(self,x):
+            return int(math.isqrt(x))
+        def gcd(self,a,b):
+            return math.gcd(a,b)
+        def mul(self,a,b):
+            return a*b
+        def sub(self,a,b):
+            return a-b
+        def add(self,a,b):
+            return a+b
+        def f_mod(self,a,b):
+            return a%b
+        def div(self,a,b):
+            return a//b
+        def abs(self,a):
+            return abs(a)
+    gmpy2=MockGMPY2()
+    mpz=int
+
+# [BLOK 3] LOGGER I VIZUALIZACIJA
+
+class Logger:
+    def __init__(self):
+        self.broj_linije=0
+    def reset(self):
+        self.broj_linije=0
+    def zapisi(self,tekst,dubina=0,boja="\033[0m"):
+        self.broj_linije+=1
+        uvlaka=""
+        if dubina>0:
+            c_okomita="\u2502"
+            c_grana="\u251c\u2500\u2500"
+            uvlaka=c_okomita*(dubina-1)+c_grana
+        oznaka=f"\033[90m{self.broj_linije:03d} \u007c\033[0m"
+        sys.stdout.write("\r\033[K")
+        print(f"{oznaka} {uvlaka}{boja}{tekst}\033[0m")
+
+log=Logger()
+START=0
+ITER=0
+
+
+# [BLOK 4] ALATI (RAM, VRIJEME, ZVUK)
+
+def get_ram():
+    try:
+        with open('/proc/self/status') as f:
+            for l in f:
+                if 'VmRSS' in l:
+                    kb=int(l.split()[1])
+                    gb=kb/1048576
+                    s="{:.15f}".format(gb)
+                    if s.startswith("0."):
+                        s=s[1:]
+                    s=s.rstrip('0')
+                    if s.endswith('.'):
+                        s+='0'
+                    return s+"GB"
+    except:
+        return "?"
+
+def fmt_vrijeme(t):
+    s="{:.15f}".format(t)
+    if s.startswith("0."):
+        s=s[1:]
+    if s.endswith('.'):
+        return s.rstrip('0')+'0'
+    return s.rstrip('0')
+
+def zvuk():
+    try:
+        os.system("play-audio Frogs.mp3 &")
+    except: 
+        pass
+
+def status(faza,n):
+    global ITER
+    ITER+=1
+    blink="\u272a" if (ITER//5000)%2==0 else " "
+    t=fmt_vrijeme((time.perf_counter_ns()-START)/1000000000)
+    sn=str(n)
+    if len(sn)>12:
+        sn=sn[:10]+".."
+    ram=get_ram()
+    msg=f"\r\033[95m[RUN]\033[0m {blink} {faza} | VRIJEME:\033[95m {t}\033[0m | RAM:\033[95m {ram}\033[0m | N:\033[95m {sn}\033[0m"
+    sys.stdout.write(msg)
+    sys.stdout.flush()
+
+     
+# [BLOK 5] WORKER (MULTI- CORE PROCES)
+
+import time
+def worker_pollard(n_str,seed,queue,event,start_t):
+    try:
+        n=mpz(n_str)
+        random.seed(seed)
+        y=mpz(random.randint(1,int(n)-1))
+        c=mpz(random.randint(1,int(n)-1))
+        m=mpz(random.randint(1,int(n)-1))
+        g=mpz(1)
+        r=mpz(1)
+        q=mpz(1)
+        x=y
+        ys=y
+        while g==1:
+            if event.is_set():
+                return
+            if (time.perf_counter_ns()-start_t)/1000000000>TIMEOUT_SEC:
+                return
+            x=y
+            for _ in range(r):
+                y=gmpy2.f_mod(gmpy2.add(gmpy2.mul(y,y),c),n)
+            k=mpz(0)
+            while k<r and g==1:
+                if event.is_set():
+                    return

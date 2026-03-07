@@ -1,0 +1,225 @@
+                ys=y
+                for _ in range(min(m,r-k)):
+                    y=gmpy2.f_mod(gmpy2.add(gmpy2.mul(y,y),c),n)
+                    diff=gmpy2.abs(gmpy2.sub(x,y))
+                    q=gmpy2.f_mod(gmpy2.mul(q,diff),n)
+                g=gmpy2.gcd(q,n)
+                k=gmpy2.add(k,m)
+            r=gmpy2.mul(r,2)
+        if g==n:
+            while True:
+                ys=gmpy2.f_mod(gmpy2.add(gmpy2.mul(ys,ys),c),n)
+                diff=gmpy2.abs(gmpy2.sub(x,ys))
+                g=gmpy2.gcd(diff,n)
+                if g>1:
+                    break
+        if g!=n:
+            queue.put(str(g))
+            event.set()
+    except:
+        pass
+
+
+# [BLOK 6] MATEMATIČKI ALGORITMI
+
+def b0_prost(n):
+    status("B0: Check",n)
+    return gmpy2.is_prime(n)
+
+def b1_trial(n,limit=50000):
+    d=mpz(2)
+    lim=mpz(limit)
+    while d<lim and d*d<=n:
+        status("B1: Trial",n)
+        if gmpy2.f_mod(n,d)==0:
+            return d
+        d=gmpy2.next_prime(d)
+    return None
+
+def b2_gauss(n,max_i=300000):
+    if gmpy2.f_mod(n,2)==0:
+        return mpz(2)
+    a=gmpy2.isqrt(n)
+    if gmpy2.mul(a,a)<n:
+        a=gmpy2.add(a,1)
+    cnt=0
+    while cnt<max_i:
+        status("B2: Gauss",n)
+        b2=gmpy2.sub(gmpy2.mul(a,a),n)
+        if gmpy2.is_square(b2):
+            b=gmpy2.isqrt(b2)
+            return gmpy2.sub(a,b)
+        a=gmpy2.add(a,1)
+        cnt+=1
+    return None
+
+def b3_pollard_multi(n):
+    if gmpy2.f_mod(n,2)==0:
+        return mpz(2)
+    queue=multiprocessing.Queue()
+    event=multiprocessing.Event()
+    procesi=[]
+    t_start=time.perf_counter_ns()
+    for i in range(BROJ_JEZGRI):
+        seed=random.randint(1,1000000)+i
+        p=multiprocessing.Process(target=worker_pollard,args=(str(n),seed,queue,event,t_start))
+        p.start()
+        procesi.append(p)
+    rezultat=None
+    while True:
+        status(f"B3: Core({BROJ_JEZGRI})",n)
+        if not queue.empty():
+            rezultat=mpz(queue.get())
+            break
+        if (time.perf_counter()-t_start)/1000000000>TIMEOUT_SEC:
+            break
+        if all(not p.is_alive() for p in procesi):
+            break
+        time.sleep(0.05)
+    event.set()
+    for p in procesi:
+        p.terminate()
+    return rezultat
+
+def gcd_gauss(a,b):
+    while abs(b)>0.0000000000001:
+        q=a/b
+        q_re=round(q.real)
+        q_im=round(q.imag)
+        q_int=complex(q_re,q_im)
+        r=a-b*q_int
+        a=b
+        b=r
+    return a
+    
+
+# [BLOK 7] LOGIKA RJEŠAVANJA
+
+def rijesi(n,dubina=0):
+    n=mpz(n)
+    if b0_prost(n):
+        t=fmt_vrijeme((time.perf_counter_ns()-START)/1000000000)
+        log.zapisi(f"[PROST] {n} (Lap: {t} s)",dubina, "\033[93m")
+        os.system("play-audio Frogs.mp3 &")
+        return [n]
+    f=None
+    metoda=""
+    if f is None:
+        f=b1_trial(n)
+        metoda="B1: Trial"
+    if f is None:
+        f=b2_gauss(n)
+        metoda="B2: Gauss"
+    if f is None: 
+        f=b3_pollard_multi(n)
+        metoda=f"B3: Pollard(x{BROJ_JEZGRI})"
+    if f is not None:
+        drugi=gmpy2.div(n,f)
+        t=fmt_vrijeme((time.perf_counter_ns()-START)/1000000000)
+        log.zapisi(f"[SPLIT] {metoda} (VRIJEME: {t} s)",dubina, "\033[93m")
+        log.zapisi(f"lijevo: {f}",dubina+1)
+        log.zapisi(f"desno: {drugi}",dubina+1)
+        lista=[]
+        lista.extend(rijesi(f,dubina+1))
+        lista.extend(rijesi(drugi,dubina+1))
+        return lista
+    return [n]
+
+def univerzalni_start(unos):
+    unos=unos.replace('i','j').replace(' ','')
+    print(f"\n\033[95m[ANALIZA] {unos}\033[0m")
+    if 'j' in unos:
+        try:
+            z=complex(unos)
+            re=int(z.real)
+            im=int(z.imag)
+            norma=mpz(re*re+im*im)
+            print(f"tip:\033[95m GAUSS (norma: {norma}\033[0m")
+            f_norme=rijesi(norma)
+            pravi=[]
+            z_temp=z
+
+            print("pretvorba faktora Norme u Gaussove faktore:")
+            for p in f_norme:
+                p=int(p)
+                g=gcd_gauss(z_temp,p)
+                if abs(g)>1001:
+                    gr=int(round(g.real))
+                    gi=int(round(g.imag))
+                    zn="+" if gi>=0 else ""
+                    pravi.append(f"({gr}{zn}{gi}j)")
+                    z_temp=z_temp/g
+                else:
+                    pravi.appemd(str(p))
+                    z_temp=z_temp/p
+            return pravi
+        except Exception as e:print("GREŠKA:\033[95m {e}\033[0m")
+    elif '/' in unos or '.' in unos:
+        try:
+            if KORISTI_GMPY2:
+                q=gmpy2.mpq(unos)
+                br=q.numerator;naz=q.denominator
+            else:
+                q=fractions.Fraction(unos)
+                br=q.numerator;naz=q.denominator                    
+            print(f"tip:\033[95m RACIONALNI -> {br}/{naz}\033[0m")
+            f_br=rijesi(gmpy2.abs(mpz(br)))
+            f_naz=rijesi(gmpy2.abs(mpz(naz)))
+            rez=[str(x) for x in f_br]
+            rez+=[f"{x}^-1" for x in f_naz]
+            return rez
+        except:pass
+    else:
+        return rijesi(mpz(unos))
+        
+
+# --- MAIN ---
+
+if __name__ == "__main__":
+    os.system("clear")
+    print("\033[1m===== ULTRA FACTORIZATOR (MAX) =====\033[0m")
+    if KORISTI_GMPY2:
+        print("Engine: GMPY2 (HIGH PRECISION)")
+    else:
+        print("Engine: PYTHON (standard)")
+    try:
+        print("-"*50)
+        cpu_in=input("broj jezgri (1- 8) [Default: 4]:")
+        if not cpu_in.strip():
+            BROJ_JEZGRI=4
+        else:
+            BROJ_JEZGRI=int(cpu_in)
+            if BROJ_JEZGRI<1:
+                BROJ_JEZGRI=1
+            if BROJ_JEZGRI>8:
+                BROJ_JEZGRI=8
+        print(f"aktivno jezgri:\033[95m {BROJ_JEZGRI}\033[0m")
+    except:
+        BROJ_JEZGRI=4
+    while True:
+        try:
+            print("\n"+"+"*50)
+            inp=input("UNOS:")
+            if not inp.strip():
+                continue
+            log.reset()
+            START=time.perf_counter_ns()
+            ITER=0
+            res=univerzalni_start(inp)
+            sys.stdout.write("\r\033[K")
+            uk=fmt_vrijeme((time.perf_counter_ns()- START)/1000000000)
+            print("-"*50)
+            print(f"GOTOVO:\033[95m  {uk} s | ITERACIJE: {ITER} | RAM: {get_ram()}\033[0m")
+            if res:
+                res.sort()
+                
+                print(f"FAKTORI: {' * '.join(map(str,res))}")
+                print(f"jezgre:\033[95m {BROJ_JEZGRI} (Safe Mode)\033[0m")
+                print(f"timeout:\033[95m {TIMEOUT_SEC} s po bloku\033[0m")
+                os.system("play-audio Frogs.mp3 &")
+
+        except KeyboardInterrupt:
+            break
+        except Exception as e:
+            print(f"\nGREŠKA: {e}")
+

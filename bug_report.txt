@@ -1,0 +1,4 @@
+Device: Samsung Galaxy A16
+Android version:15
+Termux Source: F-droid
+Termux version: Latest (ag
