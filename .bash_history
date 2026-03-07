@@ -1,29 +1,4 @@
 python ll_rho.py
-micro ll_rho.py
-micro -clipboard internal ll_rho.py
-pkg install sed -y
-sed -i '1s/^\xef\xbb\xbf//' ll_rho_clean.py
-python ll_rho_clear.py
-micro -clipboard internal ll_rho.py
-r
-micro -clipboard internal ll_rho_final.py
-micro -clipboard internal ll_rho.py
-python ll_rho.py
-micro -clipboard internal ll_rho.py
-python ll_rho.py
-micro -clipboard internal ll_rho.py
-python ll_rho.py
-micro -clipboard internal ll_rho.py
-python ll_rho.py
-termux app settings
-micro -clipboard internal ll_rho.py
-micro -clipboard inree
-micro -clipboard ižž
-micro -clipboard internal ll_rho.py
-python3 ll_rho.py
-micro -clipboard internal ll_rho.py
-source ~/faktor_env_novo/bin/activate
-python ll_rho.py
 micro -clipboard internal ll_rho.py
 python3 ll_rho.py
 micro -clipboard internal ll_rho.py
@@ -462,3 +437,64 @@ rm -rf .ruff_cache
 ls -la
 cd .local/lib/python3.12/site-packages/
 ls -d google*
+mc a.py
+ls
+ls -a
+cat .bash_history
+ls -a
+mc a.py
+ls -a
+mc break.py
+rm break.py
+ln -s /dev/null .ruff_cache
+ls -a
+rm -rf .ruff_cache
+ls -a
+mc a.py
+ls -a
+mc a.py
+pkg install android-tools
+adb pair 192.168.1.4:33115
+adb connect 192.168
+adb connect 192.168.1.4:33115
+adb pair 192.168.1.4:33115
+adb connect 192.168.1.4:33115
+adb pair 192.168.1.4:46357
+adb connect 192.168.1.4:33115
+adb pair 192.168.1.4:33115
+adb connect 192.168.1.4:46277
+adb pair 192.168.1.4:620028
+adb connect 192.168.1.4:34419
+adb pair 192.168.1.4:36161
+adb connect 192.168.1.4:33115
+mc a.py
+mc config.py
+mc .gitignore
+mc README.md
+mc a.py
+mc README.md
+mc REDME.md
+ls -a
+mc README.md
+mc a.py
+mc config.py
+git remote set-url origin https://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@github.com/zlatanvelemir-arch/Colab_A16_Recovery.git
+pkg install git
+pkg i termux-services
+sv-enable ssh-agent
+sv-enable sshd
+git remote set-url origin https://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@github.com/zlatanvelemir-arch/Colab_A16_Recovery.git
+get init
+git init
+git add .
+git commit-m "Prva_forenzika"
+git commit -m "Prva_forenzika"
+git config --global user.email "zlatanvelemir@gmail.com"
+git config --global user.name "zlatanvelemir-arch"
+git commit -m "Prva_forenzika"
+git remote add origin https://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@github.com/zlatanvelemir-arch/Colab_A16_Recovery.git
+git push -u origin main
+git branch -M main
+git push -u origin main
+git remote remove origin
+git remote -v
