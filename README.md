@@ -82,7 +82,7 @@
 * .gitignore: Sprečava curenje privatnih putanja na GitHub.
 * README.md: detaljne upute ali se dosta toga može saznati u samom kodu programa.
 
-# zadatak za progrqmera/ku (GitHub/Colab)
+# zadatak za programera/ku (GitHub/Colab)
 * Potrebno je verificirati i dopuniti logiku u a.py koja će:
 *    1. Analizirati listu od tisuću fragmentiranih bufferića.
 *    2. Prepoznati freelist stranice baze unutar tih fragmenata (gdje se nalaze "obrisani" snimci (zaslona), "obrisani" SMS-ovi, uspomene indeksirane sa architect, Ruff i ini nikad više potrebni priljepci, budući matematički otpad koji će masovno nastajati tokom izvršavanja 2., potpuno odvojenog, još nedovršenog i nevirificiranog, opsežnog programa za totalnu faktorozaciju svih vrsta brojeva, i polinoma).
