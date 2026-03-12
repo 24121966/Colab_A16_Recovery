@@ -3,7 +3,7 @@
 
 # ================================
 # NERO-X FORENSIC & RECOVERY SUITE - v18.0 [TOTAL MANA]
-# UREĐAJ: MI XIAOMI & COLAB
+# UREĐAJ: SAMSUNG GALAXY A16, Android 16, GitHub & Colab
 # nH!: NANO HARHOMIJA (status validiranog čistog naboja)
 # MNOGO MAJUŠNIH ANONIMNIH BUFFERA (512B) u RAM-u |  VACUUM
 # =================================
@@ -16,6 +16,7 @@ import math
 import shutil
 import random
 import logging
+import socket
 import hashlib
 import binascii
 import platform
@@ -34,6 +35,7 @@ import json
 import mmap
 import sqlite3
 import io
+import subprocess
 from multiprocessing import (
     Process,
     Pool,
@@ -94,7 +96,6 @@ from tenacity import (
     wait_fixed
 )
 
-# nH! NTT_RESTORER_BUFFER:
 # eliminacija rezidualnih priljepaka
 if os.path.exists(".ruff_cache"):
     shutil.rmtree(".ruff_cache", ignore_errors=True)
@@ -108,19 +109,65 @@ except ImportError:
 # nH! konfiguracija ključa i klijenta
 API_KEY = "                "
 try:
-    v_client = genai.Client(api_key=api_key)
+    v_client = genai.Client(api_key=API_KEY)
 except Exception as e:
     print(f"nH! API error: {e}")
+    gc.collect()
     sys.exit(1)
 
-# --- ZONA 2: GLOBALNE KONSTANTE I PUTANJE ---
+# --- ZONA 2: GLOBALNE KONSTANTE I PARAMETRI ---
+
+socket_host = "192.168.1.4"
+socket_port = 33115
+
 nH_conv = .000000001 # 10^-9
 H_MASS_WEIGHT = .1 # KB balasta po Henryju
 HARMONY_THRESHOLD = 7.7
 BLUE_CURSOR = "\033[94m\u2588\033[0m"
 KREKETANJE_CMD = "play-audio Frogs.mp3 &"
 
+stats_q = multiprocessing.Queue()
+term_lock = multiprocessing.Lock()
 
+CHUNK_SIZE = 512
+CHUNK_SIZE = chunk_size
+
+# --- ZONA 3: nH! STEALTH VERIFIKACIJA ZMAJA (KNOX) ---
+def nH!_verify_stealth_connection(host, port):
+    import socket
+    import subprocess
+    """Provjera vitalnosti mrežnog prolaza."""
+    print(f"Stealth provjera na {host}:{port}...")
+    try:
+        # Čišćenje stare sesije da se izbjegne "ghost" konekcije
+        subprocess.run(["adb", "disconnect"], capture_output=True)
+        conn_msg = f"adb connect {host}:{port}"
+        subprocess.run(conn_msg.split(), capture_output=True)
+        
+        # socket provjera - fizički dodir porta u kernelu
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # dovoljno vremena za odziv kroz mrežu
+        s.settimeout(1)
+        check_result = s.connect_ex((host, port))
+        s.close()
+
+        if check_result == 0:
+            # dodatna provjera: Da li ADB "vidi" uređaj kao "device"?
+            adb_out = subprocess.check_output(["adb", "devices"]).decode('utf-8', errors='ignore')
+            return f"{host}:{port}\tdevice" in adb_out
+        return False
+    except Exception as e:
+        return False
+
+# --- IZVRŠENJE I KONTROLA ZONE 3 ---
+IS_CONNECTED = nH!_verify_stealth_connection(socket_host, socket_port)
+
+with term_lock:
+    if IS_CONNECTED:
+        print(f"{BLUE_CURSOR} nH! zmaj Knox je miran. Veza {socket_host}:{socket_port} aktivna.")
+    else:
+        print(f"{BLUE_CURSOR} obavijest: Spava zmaj Knox. Pokreni adb pair i adb connect.")
+        print(f"{BLUE_CURSOR} status: Port {socket_port} nije dozvolio ulaz u kernel.")
 
 # POKUŠAJ UČITAVANJA (privatne putanje s _DB_ OZNAKAMA)
 try:    
@@ -128,20 +175,44 @@ try:
 except ImportError:
     # Ako programer/ka sa GitHuba nema moj config.py, PATHS je prazan.
     PATHS = {
-        "SMS_DB": "", # SMS/MMS baza (telephony provider)
-        "CALLS_DB": "", # baza poziva
-        "MEDIA_DB": "", # media baza (slike, video, thumbnails indeksi)
-        "RUBIN_DB": "", # Samsung Rubin (personalizacija i strojno učenje kretanja podataka)
-        "THUMBNAIL_DIR": "",  # fizička lokacija (ako je aktivna)
-        "GPHOTOS_CACHE": "", # lokacija gdje Google Photos čuva svoj cache (često veći od .thumbnails)
-        "SAMSUNG_TRASH_PHOTO_DB": "", # lokacija baze koja upravlja otpadom (SQLite)
-        "SAMSUNG_TRASH_PHOTO_DIR": "", # fizička skrivena lokacija privremenih obrisanih datoteka
-        "SAMSUNG_TRASH_SMS": "", # glavna baza u kojoj se nalaze "obrisane" poruke (prije trajnog uklanjanja)
+        # SMS/MMS baza (telephony provider)
+        "SMS_DB": "",
+        # baza poziva
+        "CALLS_DB": "",
+        # media baza (slike, video, thumbnails indeksi)
+        "MEDIA_DB": "",
+        # Samsung Rubin (personalizacija i strojno učenje kretanja podataka)
+        "RUBIN_DB": "",
+        # fizička lokacija (ako je aktivna)
+        "THUMBNAIL_DIR": "",
+        # lokacija gdje Google Photos čuva svoj cache (često veći od .thumbnails)
+        "GPHOTOS_CACHE": "",
+        # lokacija baze koja upravlja otpadom (SQLite)
+        "SAMSUNG_TRASH_PHOTO_DB": "",
+        # fizička skrivena lokacija privremenih obrisanih datoteka
+        "SAMSUNG_TRASH_PHOTO_DIR": "",
+        # glavna baza u kojoj se nalaze "obrisane" poruke (prije trajnog uklanjanja)
+        "SAMSUNG_TRASH_SMS": "",
         "GOOGLE_MESSAGES": ""
     }
 
 # --- POTPROGRAM ZA STVARANJE MINIMALNIH BUFFERA (512B) ---
-def process_to_fragments(path_key, chunk_size=512):
+def nH!_prepare_payload(path_key=None, count=1024):
+    # inicijalizacija liste za anonimne bufferiće
+    fragments = []
+    # izvlačenje naboja iz flash memorije
+    import subprocess
+    # rad unutar RAM-a bez ostavljanja tragova
+    import io
+
+    # --- LOGIČKA PRIPREMA LOKALNIH PROMJENJIVIH ---
+    # rezervirano mjesto za sirovi naboj
+    raw_data = b""
+    # privremeno spremište prije sjeckanja
+    data_list = []
+    # deklaracija memorijskog toka
+    f_io = None
+    
     """
     Sve (baze ili slike) pretvara u listu anonimnih fragmenata od 512 bajtova.
     Ovo je najmanja preporučljiva veličina za SQLite strukturu.
@@ -149,110 +220,62 @@ def process_to_fragments(path_key, chunk_size=512):
     Ako nema direktnog pristupa (nema roota), programer/ka na GitHubu
     ovdje trebaju implementirati 'adb shell cat' stream metodu.
     """
-    path = PATHS.get(path_key)
-    if not path or not os.path.exists(path):
-        # putanja ne postoji ili nije definirana
-        return None
+    try:
+        # nH! pokušaj ekstrakcije naboja
+        if path_key:
+            raw_data = subprocess.check_output(['adb', 'shell', 'su', '-c', 'cat' + path_key])
+            # Ako baza nije prazna, ide priprema za sjeckanje.
+            if raw_data:
+                # Ako je baza uspješno pročitana.
+                f_io = io.BytesIO(raw_data)
 
-    fragments = []
-
-    # UNUTRAŠNJA FUNKCIJA ZA SJECKANJE
-    def slice_file(file_path):
-        try:
-            with open(file_path, 'rb') as f_io:
-                while True:
-                    # čitanje točno jednog komadića (chunk)
-                    chunk = f_io.read(chunk_size)
-                    if not chunk:
-                        break
-                    # Svaki fragment od 512B postaje zaseban anonimni objekt u RAM-u.
+                # sjeckanje u anonimne bufferiće od 512B
+                while (chunk := f_io.read(chunk_size)):
+                    data_list.append(chunk)
+                # enumerate: numeriranje za kasniji povratak na flash memoriju
+                # i je redni broj, a chunk je nH! naboj
+                for i, chunk in enumerate(data_list):
                     fragments.append(io.BytesIO(chunk))
-        except PermissionError:
-            # KLJUČ ZA NEROOTAN SAMSUNG (garancija):
-            # Programer/ka na GitHubu ovdje dopisuje ADB stream metodu.
-            return f"zahtjev za ADB streamom: {file_path}"
-            
-    # AKO JE DATOTEKA (npr., _DB_)
-    if os.path.isfile(path):
-        slice_file(path)
-
-    # AKO JE MAPA (npr., _DIR)
-    elif os.path.isdir(path):
-        # Prolazi kroz sve datoteke u mapi i SVAKU sjecka na 512 bajtova.
-        for filename in os.listdir(path):
-            full_path = os.path.join(path, filename)
-            if os.path.isfile(full_path):
-                slice_file(full_path)
+                    
+                # nH! čišćenje tragova originala iz RAM-a
+                del raw_data
+                # oslobađanje liste privremenih bajtova
+                del data_list
+                f_io.close()
                 
-    # vraća tisuće bufferića od 512B
+    except Exception as e:
+        print(f"{BLUE_CURSOR} Greška pri sjeckanju: {e}")
+        pass
     return fragments
 
-# PRIPREMA ZA IZVRŠENJE NA COLABU
-def prepare_for_colab(fragments):
-    """
-    Priprema tisuće fragmetiranih bufferića za slanje na dopunu i verifikaciju u GitHub
-    te kasnije za izvršavanje na Colabu.
-    Programer/ka ovdje dodaje enkripciju i slanje kroz aktivni socket_port.
-    """
-    # Ova funkcija omogućuje da podaci 'ispare' s mobilnog
-    # i pojave se u RAM-u Colaba radi reparacije.
-    
-    # Ovo osigurava da se ne ostavlja trag na flash memoriji mobilnog.
-    pass
+# --- ZONA 4: PRIPREMA I SLANJE ---
+def send_to_colab_pro(fragments, stats_q):
+    # nH! definiranje komunikacijske magistrale    
+    stats_q = multiprocessing.Queue()
+    # i je redni broj, a f_io je bufferić
+    for i, f_io in enumerate(fragments):
+        raw_chunk = f_io.getvalue()
+        
+        stats_q.put({
+            'index': i,
+            'size': len(raw_chunk)
+        })
 
-    
+        # Precizan izvještaj: šalje se indeks i veličina.
+        stats_q.put()
+        # Sada može da nosi informaciju o napretku.
+        stats_q.put(f"Spakiran fragment {i}.")
+        
+        # nH! uništavanje tragova svakog bufferića
+        fragment.close()    
+        del fragment
+        # periodično čišćenje na svakih 100 bufferića
+        if i % 100 == 0:
+            gc.collect()
 
-# --- GLOBALNI REGISTRI ZA MULTIPROCESSING ---
-stats_q = Queue()
-term_lock = Lock()
-
-# --- AUTOMATSKA ALOKACIJA IZ KERNELA ---
-def get_kernel_mem():
-    try:
-        with open('/proc/meminfo', 'r') as f_mem:
-            for line in f_mem:
-                if 'MemAvailable' in line:
-                    return int(line.split()) * 1024
-    except Exception:
-        # sigurnosni minimum
-        return 256 * 1024 * 1024
-    return 128 * 1024 * 1024
-
-# --- 1. KREIRANJE ANONIMNOG BUFFERA
-# (automatski odabir 25% RAM-a) ---
-# NTT_BUFFER_SIZE = int(get_kernel_mem() * .25)
-# NTT_RESTORER_BUFFER = mmap.mmap(-1, NTT_BUFFER_SIZE, flags=mmap.MAP_PRIVATE | mmap.MAP_ANONYMOUS)
-# print(f"Rezervirano: {NTT_BUFFER_SIZE // (1024*1024)} MB anonimnog prostora.")
-
-# 2. IN-MEMORY OPERACIJA
-# (rad bez diska)
-f_io = io.BytesIO()
-
-# 3. nH! STEALTH VERIFIKACIJA ZMAJA (KNOX)
-# (diskretna provjera veze na 192.168.1.4:34411)
-def nH_verify_stealth_connection():
-    """
-    Pasivna detekcija naboja bez pokretanja ADB procesa.
-    """
-    try:
-        import socket
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.settimeout(1)
-        if s.connect_ex(("192.168.1.4", 33115)) == 0:
-            with term_lock:
-                print(f"{BLUE_CURSOR} nH! Zmaj Knox je miran. Veza sa A16 je aktivna.")
-            return True
-        else:
-            with term_lock:
-                print("obavijest: Zmaj Knox spava. Provjeri bežično otklanjanje grešaka.")
-            return False
-    except Exception:
-        return False
-
-# pozivanje provjere
-nH_verify_stealth_connection()
-
-# --- ZONA 3: nH! FORMATER (BRISANJE VODEĆE I REPNIH NULA) ---
+        f_io.close()
+  
+# --- ZONA 5: nH! FORMATER (BRISANJE VODEĆE I REPNIH NULA) ---
 def fmt(v: float) -> str:
     """Pretvara, npr, 0.500 u .5 za efikasniji prenos podataka."""
     try:
@@ -269,7 +292,7 @@ def fmt(v: float) -> str:
     except Exception:
          return "."
     
-# --- ZONA 4: nH / H BALASTNA FIZIKA (ČISTI KAPACITET) ---
+# --- ZONA 6: nH / H BALASTNA FIZIKA (ČISTI KAPACITET) ---
 class nH_Calculations:
     """Računa induktivni balast i oduzima ga od kapaciteta."""
     @staticmethod
@@ -296,13 +319,13 @@ class nH_Calculations:
         clean_v = raw_kb - (h_val * .1)
         return clean_v if clean_v > .000000000 else .000000000
         
-# --- ZONA 5: UPRAVLJANJE MEMORIJOM ---
+# --- ZONA 7: UPRAVLJANJE MEMORIJOM ---
 def nH_flush_ram():
     """Prisilno zaustavljanje RAM naboja Samsunga A16."""
     gc.collect()
     time.sleep(.001)
 
-# --- ZONA 6: nH! AUTOMATSKI NADZOR MEMORIJE (@wraps) ---
+# --- ZONA 8: nH! AUTOMATSKI NADZOR MEMORIJE (@wraps) ---
 def nH_trace_charge(func):
     """@ Dekorator za automatsko pražnjenje nH naboja iz RAM-a."""
     @wraps(func)
@@ -314,7 +337,7 @@ def nH_trace_charge(func):
         return res
     return wrapper
 
-# --- ZONA 7: nH! AI KONTROLA ISPRAŽNJENOG NABOJA ---
+# --- ZONA 9: nH! AI KONTROLA ISPRAŽNJENOG NABOJA ---
 @nH_trace_charge
 @retry(stop=stop_after_attempt(999999), wait=wait_fixed(2))
 def nH_ai_audit(data):
@@ -333,7 +356,7 @@ def nH_ai_audit(data):
         raise
 
 
-# --- ZONA 7: nH! ALGEBARSKI SENZORI (re & json) ---
+# --- ZONA 10: nH! ALGEBARSKI SENZORI (re & json) ---
 def nH_regex_scout(data: bytes, pattern: str) -> List[bytes]:
     """Koristi modul 're' za lociranje bolesnog tkiva."""
     return findall(compile(pattern.encode()), data)
@@ -346,7 +369,7 @@ def nH_json_audit(data: bytes) -> bool:
     except (JSONDecodeError, UnicodeDecodeError):
         return False
     
-# --- ZONA 8: nH! HARDVERSKI CONTEXT MANAGER ---
+# --- ZONA 11: nH! HARDVERSKI CONTEXT MANAGER ---
 @contextmanager
 def nH_safe_io(path: str, mode: str):
     """Osigurava hardversku barijeru Samsunga A16 (os.fsync)."""
@@ -361,7 +384,7 @@ def nH_safe_io(path: str, mode: str):
         f_io.close()
         nH_flush_ram()
         
-# --- ZONA 9: ANALITIČKI SENZORI (ENTROPIJA I GUSTOĆA) ---
+# --- ZONA 12: ANALITIČKI SENZORI (ENTROPIJA I GUSTOĆA) ---
 def nH_entropy(data: bytes) -> float:
     """Shannonova entropija za detekciju bolesnog tkiva."""
     if not data:
@@ -381,7 +404,7 @@ def nH_density(data: bytes) -> float:
     u = len(set(data))
     return len(data) / u if u > 0 else .000000000
 
-# --- ZONA 10: @PROPERTY MODEL nH! KAPACITETA ---
+# --- ZONA 13: @PROPERTY MODEL nH! KAPACITETA ---
 class ForensicUnit:
     def __init__(self, path: str):
         self.path = path
@@ -464,7 +487,7 @@ MAGIC_SIGS = {
         b'Rar!\x1a\x07'        
 }
 
-# --- ZONA 11: nH! DOPUNSKA KONTROLA FORMATA ---
+# --- ZONA 14: nH! DOPUNSKA KONTROLA FORMATA ---
 def nH_verify_format_by_magic(path: str) -> bool:
     """Provjerava identitet datoteka prema magičnim potpisima."""
     ext = os.path.splitext(path)[1].lower()
@@ -481,7 +504,7 @@ def nH_verify_format_by_magic(path: str) -> bool:
     except Exception:
         return False
     
-# --- ZONA 12: nH! REGULATOR BOLESNOG nH NABOJA ---
+# --- ZONA 15: nH! REGULATOR BOLESNOG nH NABOJA ---
 def nH_is_tissue_sick(data: bytes) -> bool:
     """Provjerava da li je tkivo zaraženo (entropija + algebarski šum). ---
     ent = nH_entropy(data)
@@ -489,7 +512,7 @@ def nH_is_tissue_sick(data: bytes) -> bool:
     # Ako naboj prelazi granicu harmonije (7.7).
     return ent > HARMONY_LIMIT or alg > .05
 
-# --- ZONA 13: MD5 VOŠTANI PEČAT (INTEGRITY SEAL) ---
+# --- ZONA 16: MD5 VOŠTANI PEČAT (INTEGRITY SEAL) ---
 def nH_get_md5_seal(p_path: str) -> str:
     """Stvara digitalni pečat za 'architect' uspomene."""
     if not os.path.exists(p_path):
@@ -502,7 +525,7 @@ def nH_get_md5_seal(p_path: str) -> str:
     except:
         return "0"
 
-# --- ZONA 14: LIJEČENJE 'architect' USPOMENA (SACRED) ---
+# --- ZONA 17: LIJEČENJE 'architect' USPOMENA (SACRED) ---
 def heal_sacred_architect_memory(p: str):
     """
     Kirurgija:
@@ -563,7 +586,7 @@ def heal_sacred_architect_memory(p: str):
     except Exception:
         pass
 
-# --- ZONA 15: nH! REKONSTRUKCIJA BINARNOG ŠAVA v40 ---
+# --- ZONA 18: nH! REKONSTRUKCIJA BINARNOG ŠAVA v40 ---
 def nH_align_binary_sacred(path: str, data: bytearray):
     """Osigurava 100% funkcionalnu cjelinu 'architect' uspomene."""
     if not data: return False
@@ -577,7 +600,7 @@ def nH_align_binary_sacred(path: str, data: bytearray):
     except Exception:
         return False
     
-# --- ZONA 16: nH! SMS SQLite CARVER (DUBINSKO KOPANJE) ---
+# --- ZONA 19: nH! SMS SQLite CARVER (DUBINSKO KOPANJE) ---
 def nH_carve_deleted_sms_bodies(path: str) -> List[str]:
     """1. Omogućuje čitanje starih "obrisanih" SMS-ova iz SQLitea."""
     sms_out = []
@@ -606,7 +629,7 @@ def nH_carve_deleted_sms_bodies(path: str) -> List[str]:
     except Exception:
         return []
 
-# --- ZONA 17: nH! FULL BINARY DECRYPTION ---
+# --- ZONA 20: nH! FULL BINARY DECRYPTION ---
 def nH_full_binary_decoder(data: bytes) -> str:
     """Pretvara cijeli heksadecimalni prikaz parazita u tekst."""
     try:
@@ -618,7 +641,7 @@ def nH_full_binary_decoder(data: bytes) -> str:
     except:
         return "Greška u nH! dešifriranju."
 
-# --- ZONA 18: nH! ALGEBARSKI DEBRIS ANALYZER (PrimeMaster Pro) ---
+# --- ZONA 21: nH! ALGEBARSKI DEBRIS ANALYZER (PrimeMaster Pro) ---
 def nH_audit_algebraic_ballast(data: bytes) -> float:
     """Detektira nH naboj ostataka faktorizacije polinoma."""
     h_math = .000000000
@@ -630,7 +653,7 @@ def nH_audit_algebraic_ballast(data: bytes) -> float:
             h_math += data.count(pattern) * weight
     return h_math
 
-# --- ZONA 19: nH! INODE EMF MONITOR (Samsung A16) ---
+# --- ZONA 22: nH! INODE EMF MONITOR (Samsung A16) ---
 def nH_monitor_inode_emf_drift(path: str) -> str:
     """Provjerava da li je sinkroniziran zapis na flashu (Android 16)."""
     try:
@@ -646,7 +669,7 @@ def nH_monitor_inode_emf_drift(path: str) -> str:
     except:
         return ".0"
     
-# --- ZONA 20: nH! RADNIK ZA MULTIPROCESSING (MANA NODE) ---
+# --- ZONA 23: nH! RADNIK ZA MULTIPROCESSING (MANA NODE) ---
 def nH_forensic_worker_node(files: List[str], q: Queue):
     """Glavni nH! procesorski čvor za rad na 4 jezgre."""
     for fp in files:
@@ -695,7 +718,7 @@ def nH_forensic_worker_node(files: List[str], q: Queue):
                 # paraziti, Ruff i PrimeMaster Pro Cache -> bina-2 (heksadecimalno)
                 if b'ruff' in open(fp, 'rb').
             
-# --- ZONA 21: MODUL ZA nH! ANALIZU nH/H DRIVTA (DETALJNO) ---
+# --- ZONA 24: MODUL ZA nH! ANALIZU nH/H DRIVTA (DETALJNO) ---
 def nH_measure_detalied_drift(p: str) -> str:
     """Vraća iznos elektromagnetnog naboja u .X formatu."""
     h_total_drift = .000000000
@@ -709,7 +732,7 @@ def nH_measure_detalied_drift(p: str) -> str:
     except Exception:
         return "0"
 
-# --- ZONA 22: nH! VERIFIKATOR INODE ZAPISA (Samsung A16) ---
+# --- ZONA 25: nH! VERIFIKATOR INODE ZAPISA (Samsung A16) ---
 def nH_verify_inode_stability(path: str) -> bool:
     """Provjerava da li je flash zapis sinkroniziran (Android 16) ---
     try:
@@ -721,7 +744,7 @@ def nH_verify_inode_stability(path: str) -> bool:
         return False
 
 
-# --- ZONA 23: ANALIZATOR REZIDUALNE ENTROPIJE ---
+# --- ZONA 26: ANALIZATOR REZIDUALNE ENTROPIJE ---
 @nH_trace_charge
 def nH_measure_residual_chaos(data: bytes) -> float:
     """Mjeri razinu kaosa radi potvrde Nano-harmonije."""
@@ -1351,5 +1374,3 @@ if __name__ == "__main__":
 # izvršavanje finala programa
 # velika_revizija_prije_likvidacije()
 # gc.collect()
-
-                    
