@@ -1,0 +1,61 @@
+# spreči grabež multimedije i podataka s telefona
+storage/
+dcim/
+DCIM/
+movies/
+music/
+pictures/
+documents/
+download/
+downloads/
+faktor_env_novo/
+genai_env/
+
+# spreči sistemski otpad i virtualna okruženja
+myenv/
+__pycache__/
+*.pyc
+*.db
+
+# spreči staru "rđu" i privremene fajlove
+.cargo/
+target/
+Cargo.lock
+*~
+*.swp
+*.tmp
+
+# osjetljivi sistemski fajlovi 
+config.py
+
+# spreči stare pokušaje programa u micru
+Frogs.mp3
+cistac.py
+deo1.txt
+deo2.txt
+ll-test.py
+ll_rho.py
+ll_rho_clean.py
+ll_total.py
+pajser.py
+together.py
+
+# SISTEMSKA SKRIVENA ZAŠTITA
+.*
+!/.gitignore
+
+# KONKRETNI SISTEMSKI FOLDERI
+.android/
+.cache/
+.config/
+.local/
+.ssh/
+.termux/
+
+# POVIJEST I PRIVREMENI FAJLOVI
+.bash_history
+.python_history
+.bashrc
+.gitconfig
+.lesshst
+.nanorc
