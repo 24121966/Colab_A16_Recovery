@@ -132,6 +132,25 @@ term_lock = multiprocessing.Lock()
 CHUNK_SIZE = 512
 CHUNK_SIZE = chunk_size
 
+def fmt_vrijeme(t):
+    global sek_opis
+    t = int(t)
+    zadnja = t % 10
+    if 11 <= (t % 100) <= 14:
+        sek_opis = "sekundi"
+    elif zadnja == 1:
+        sek_opis = "sekunda"
+    elif 2 <= zadnja <= 4:
+        sek_opis = "sekunde"
+    else:
+        sek_opis = "sekundi"
+    s = "{:.30f}".format(t)
+    if s.startswith('0.'):
+        s = s[1:]
+    if s.endswith('.'):
+        return s.rstrip('0') + '0'
+    return s.rstrip('0')
+
 # --- ZONA 3: nH! STEALTH VERIFIKACIJA ZMAJA (KNOX) ---
 def nH!_verify_stealth_connection(host, port):
     import socket
