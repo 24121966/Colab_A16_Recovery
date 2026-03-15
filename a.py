@@ -147,7 +147,7 @@ def nH!_verify_stealth_connection(host, port):
         # socket provjera - fizički dodir porta u kernelu
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         # dovoljno vremena za odziv kroz mrežu
-        s.settimeout(1)
+        s.settimeout(110)
         check_result = s.connect_ex((host, port))
         s.close()
 
@@ -223,7 +223,7 @@ def nH!_prepare_payload(path_key=None, count=1024):
     try:
         # nH! pokušaj ekstrakcije naboja
         if path_key:
-            raw_data = subprocess.check_output(['adb', 'shell', 'su', '-c', 'cat' + path_key])
+            raw_data = subprocess.check_output(['adb', 'shell', 'su', '-c', f"cat {PATHS[path_key]}"], stderr=subprocess.STDOUT)
             # Ako baza nije prazna, ide priprema za sjeckanje.
             if raw_data:
                 # Ako je baza uspješno pročitana.
