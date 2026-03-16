@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# -*-coding:utf-8-*-
+# -*- coding: utf-8 -*-
 
 # ================================
 # NERO-X FORENSIC & RECOVERY SUITE - v18.0 [TOTAL MANA]
@@ -158,7 +158,7 @@ def nH!_verify_stealth_connection(host, port):
     """Provjera vitalnosti mrežnog prolaza."""
     print(f"Stealth provjera na {host}:{port}...")
     try:
-        # Čišćenje stare sesije da se izbjegne "ghost" konekcije
+        # čišćenje stare sesije da se izbjegnu "ghost" konekcije
         subprocess.run(["adb", "disconnect"], capture_output=True)
         conn_msg = f"adb connect {host}:{port}"
         subprocess.run(conn_msg.split(), capture_output=True)
@@ -271,7 +271,7 @@ def nH!_prepare_payload(path_key=None, count=1024):
 def send_to_colab_pro(fragments, stats_q):
     # nH! definiranje komunikacijske magistrale    
     stats_q = multiprocessing.Queue()
-    # i je redni broj, a f_io je bufferić
+    # i je redni broj, a f_io je bufferić.
     for i, f_io in enumerate(fragments):
         raw_chunk = f_io.getvalue()
         
@@ -334,7 +334,7 @@ class nH_Calculations:
     
     @staticmethod
     def get_clean_kb(raw_kb: float, h_val: float) -> float:
-        """ ČISTI nH! KAPACITET = Raw KB - (Henryji * .1)
+        """ ČISTI nH! KAPACITET = Raw KB - (Henryji * .1)"""
         clean_v = raw_kb - (h_val * .1)
         return clean_v if clean_v > .000000000 else .000000000
         
@@ -361,12 +361,12 @@ def nH_trace_charge(func):
 @retry(stop=stop_after_attempt(999999), wait=wait_fixed(2))
 def nH_ai_audit(data):
     """
-    konačna unifikacija:
+    Konačna unifikacija:
     data ulazi u AI restauraciju.
     """
-    global v_client
+    global client
     try:
-        res = v_client.models.generate_content(
+        res = client.models.generate_content(
             model="gemini-3.0-flash",
             contents=f"nH! restauriraj: {data}"
         )
@@ -377,7 +377,7 @@ def nH_ai_audit(data):
 
 # --- ZONA 10: nH! ALGEBARSKI SENZORI (re & json) ---
 def nH_regex_scout(data: bytes, pattern: str) -> List[bytes]:
-    """Koristi modul 're' za lociranje bolesnog tkiva."""
+    """Koristi paket 're' za lociranje bolesnog tkiva."""
     return findall(compile(pattern.encode()), data)
 
 def nH_json_audit(data: bytes) -> bool:
@@ -447,6 +447,7 @@ BIJELA_LISTA_EXT = {
     '.7z',
     '.rar'
 }
+
 CRNA_LISTA_LC = {
     'cache' in putanja.lower(),
     '.tmp' in putanja.lower(),
@@ -454,7 +455,7 @@ CRNA_LISTA_LC = {
     'ruff' in putanja.lower(),
     '.cache_ruff',
     '.ruff_cache',
-    '__pycache',
+    '__pycache__',
     '.cache',
     '.ds_store',
     'thumbs.db',
@@ -514,7 +515,7 @@ def nH_verify_format_by_magic(path: str) -> bool:
     try:
         with open(path, 'rb') as f_io:
             # nH! impuls:
-            # Čitanje prvih 16 bajtova za verifikaciju."""
+            """Čitanje prvih 16 bajtova za verifikaciju."""
             header = f_io.read(16)
             sig = MagicRegistry.SIGNATURES[ext]
             if isinstance(sig, list):
@@ -525,7 +526,7 @@ def nH_verify_format_by_magic(path: str) -> bool:
     
 # --- ZONA 15: nH! REGULATOR BOLESNOG nH NABOJA ---
 def nH_is_tissue_sick(data: bytes) -> bool:
-    """Provjerava da li je tkivo zaraženo (entropija + algebarski šum). ---
+    """Provjerava da li je tkivo zaraženo (entropija + algebarski šum)."""
     ent = nH_entropy(data)
     alg = nH_algebraic_debris_scout(data)
     # Ako naboj prelazi granicu harmonije (7.7).
@@ -555,7 +556,8 @@ def heal_sacred_architect_memory(p: str):
         return
     name = os.path.basename(p)
     bkp = p + ".nH_sacred_bkp"
-    shutil.copy2(p, bkp) # 1. izrada rezervne kopije (bkp) - osiguranje
+    # izrada rezervne kopije (bkp) - osiguranje
+    shutil.copy2(p, bkp)
     seal_alpha = nH_get_md5_seal(p)
     clean_body = bytearray()
     try:
@@ -595,13 +597,15 @@ def heal_sacred_architect_memory(p: str):
                 # Sanacija nije 100%: Likvidacija lošeg originala. Vraća se rezervna kopija (bkp).
                 with term_lock:
                     print(f"[!] {name} nije 100% saniran. Vraća se rezervna kopija (bkp).")
-                absolute_cyclic_wipe(p) # likvidacija lošeg originala.
-                shutil.move(bkp, p) # Rezervna kopija postaje moja uspomena.
+                # Likvidacija lošeg originala.
+                absolute_cyclic_wipe(p)
+                # Rezervna kopija postaje moja uspomena.
+                shutil.move(bkp, p)
             nH_flush_ram
         except Exception as e:
             if os.path.exists(bkp):
                 os.remove(bkp)
-            with term_lock:print(f"[X] nH! kritična greška: {e}
+            with term_lock:print(f"[X] nH! kritična greška: {e}")
     except Exception:
         pass
 
@@ -627,7 +631,7 @@ def nH_carve_deleted_sms_bodies(path: str) -> List[str]:
         return []
     try:
         with open(path, 'rb') as f_io:
-            # Skeniranje binarne baze (Android 16 provider)
+            # Skeniranje binarne baze (Android 16 provider).
             raw_blob = f_io.read()
             s_idx = 0
             while True:
@@ -652,9 +656,9 @@ def nH_carve_deleted_sms_bodies(path: str) -> List[str]:
 def nH_full_binary_decoder(data: bytes) -> str:
     """Pretvara cijeli heksadecimalni prikaz parazita u tekst."""
     try:
-        # 2.1 Generiranje potpunog heksadecimalnog dumpa (maksimalna dekompresija.) ---
+        # 2.1 Generiranje potpunog heksadecimalnog dumpa (maksimalna dekompresija).
         hex_raw = binascii.hexlify(data).decode('ascii').upper()
-        # 2.2 Prijevod u čitljive nH! znakove (harmonijski filter)
+        # 2.2 Prijevod u čitljive nH! znakove (harmonijski filter).
         t_view = "".join([chr(b) if 32 <= b <= 126 else "." for b in data])
         return f"HEX: {hex_raw}\nPRIJEVOD: {t_view}"
     except:
@@ -747,13 +751,14 @@ def nH_measure_detalied_drift(p: str) -> str:
             sample = f_io.read(16384)
             h_total_drift = nH_Calculations.h_detect(sample)
             h_total_drift += nH_audit_algrebaic_residue(sample)
-        return fmt(h_total_drift) # .X format bez vodeće 0
+        # .X format bez vodeće 0
+        return fmt(h_total_drift)
     except Exception:
         return "0"
 
 # --- ZONA 25: nH! VERIFIKATOR INODE ZAPISA (Samsung A16) ---
 def nH_verify_inode_stability(path: str) -> bool:
-    """Provjerava da li je flash zapis sinkroniziran (Android 16) ---
+    """Provjerava da li je flash zapis sinkroniziran (Android 16)."""
     try:
         st = os.stat(path)
         # nH! logika:
@@ -778,7 +783,7 @@ def nH_algebraic_ballast_audit(p: str) -> float:
     h_math_drift = .000000000
     try:
         with open(p, 'rb') as f_io:
-            # Skeniranje polinoma i faktora (Poly, x**, isprime)
+            # Skeniranje polinoma i faktora (Poly, x**, isprime).
             sample = f_io.read(16384)
             # Svaki matematički otisak nosi dodatni induktivni balast.
             h_math_drift += (sample.count(b'prime') * .005)
@@ -804,7 +809,7 @@ def nH_sms_carver_logic(p: str) -> List[str]:
                 if start == -1:
                     break
                 # nH! impuls:
-                # kraj poruke je Null terminator.
+                # Kraj poruke je Null terminator.
                 end = raw_blob.find(b'\x00', start + 5)
                 if end != -1:
                     fragment = raw_blob[start+5:end]
@@ -859,7 +864,7 @@ def nH_mana_worker_node(files: List[str], q: Queue):
         
         if is_sacred:
             # --- nH! PROTOKOL ZAŠTITE SVETINJA ---
-            # stvaranje MD5 voštanog pečata prije kirurgije
+            # Stvaranje MD5 voštanog pečata prije kirurgije.
             seal_alpha = nH_MD5_Sealer.get_md5_seal(fp)
 
             with open(fp, 'rb') as f_io:
@@ -901,7 +906,7 @@ def nH_audit_algebraic_complexity(data: bytes) -> float:
         # Svaki kompleksni matematički 'otisak' nosi Henry balast.            
         c_charge += data.count(b'solve') * .015
         c_charge += data.count(b'Integer') * .008
-    # analiza dubine nH! šavova polinoma.
+    # Analiza dubine nH! šavova polinoma.
     if b'x**' in data:
         c_charge += data.count(b'x**') * .004
     return c_charge
@@ -913,7 +918,7 @@ def nH_verify_A16_voltage_stability(p: str) -> bool:
         if not os.path.exists(p):
             return True
         st_res = os.stat(p)
-        # nH! impuls: provjera elektromagnetske devijacije inodea.
+        # nH! impuls: Provjera elektromagnetske devijacije inodea.
         if st_res.st_nlink > 0:
             voltage_drift = random.random() * .0002
             return voltage_drift < .06
@@ -931,7 +936,8 @@ def nH_measure_inductive_drift_A16(p: str) -> str:
             sample = f_io.read(16384)
             h_drift = nH_Calculations.h_detect(sample)
             h_drift += nH_algebraic_complexity_audit(sample)
-        return fmt(h_drift) # .X format bez vodeće 0
+        # .X format bez vodeće 0
+        return fmt(h_drift)
     except:
         return "0"
 
@@ -970,7 +976,7 @@ def nH_verify_header_purity_v16(path: str) -> bool:
     try:
         # izbjegavanje kolizije s globalnim f_io bufferom
         with open(path, 'rb') as f_io_check:
-            # Skeniranje nH naboja u punoj 16KB stranici (Android 16)
+            # Skeniranje nH naboja u punoj 16KB stranici (Android 16).
             h_check = f_io.read(16384)
             return b'ruff' not in h_check.lower() and b'nH' not in h_check
     except Exception:
@@ -985,7 +991,8 @@ def nH_stabilize_binary_sequence(p: str):
         with open(p, 'ab') as f_io_stab:
             # nH! impuls: postavljanje barijere protiv povratka balasta
             f_io_stab.write(b'\x00\xff\x00')
-            os.fsync(f_io_stab.fileno()) # nH! hardverska barijera
+            # nH! hardverska barijera
+            os.fsync(f_io_stab.fileno())
         nH_flush_ram()
     except:
         pass
@@ -1088,13 +1095,13 @@ def nH_audit_A16_drift_log(path: str):
 def nH_calculate_algebraic_mass_balance(h_sum: float) -> float:
     """Diferencijalni nH! izračun mase factoring balasta."""
     # nH! standard:
-    # Henryji pretvoreni u digitalnu masu (H * .1)
+    # Henryji pretvoreni u digitalnu masu (H * .1).
     mass_delta = h_sum * .1
     return mass_delta if mass_delta > .000000000 else .000000000
 
 # --- ZONA   nH! FLASH CELL WEAR LEVELING ---
 def nH_apply_wear_leveling_A16():
-    """Ujednačava nH naboj na flash memoriji Samsunga A16.
+    """Ujednačava nH naboj na flash memoriji Samsunga A16."""
     try:
         subprocess.run(["sync"], check=True)
         # nH! impuls:
@@ -1133,7 +1140,7 @@ if not os.path.exists(path):
             # prevod u čitljive znakove (nH! harmonijski filter)
             readable_text  = ""
             for b in b_data:
-                # zadržavanje samo standardnih ASCII zmakova za uvid.
+                # Zadržavanje samo standardnih ASCII znakova za uvid.
                 if 32 <= b <= 126:
                     readable_text += chr(b)
                 elif b == 10:
@@ -1238,7 +1245,8 @@ def nH_reconstruct_sqlite_telephony_indices(db_path: str):
             # prisila baze na 0. točku sinkronizacije
             f_io.seek(24)
             f_io.write(b'\x00\x00\x00\x01')
-            os.fsync(f_io.fileno()) # nH! hardverska barijera
+            # nH! hardverska barijera
+            os.fsync(f_io.fileno())
         nH_flush_ram()
 # --- ZONA   nH! ALGEBARSKI SCOUTER LVL 4 (Samsung A16)
 def nH_algebraic_scouter_lvl4(data: bytes) -> float:
@@ -1301,14 +1309,14 @@ def nH_final_liquidation():
         nH!_stealth_adb_call("content delete --uri content://sms")
         
     # 2. likvidacija glavnog NTT_RESTORER_BUFFER-a
-    if NTT_RESTORER_BUFFER is not None:
+    # if NTT_RESTORER_BUFFER is not None:
         # kirurška 0 na početak
-        NTT_RESTORER_BUFFER.seek(0)
+        # NTT_RESTORER_BUFFER.seek(0)
         # RAM amnezija - prepisivanje nulama
-        NTT_RESTORER_BUFFER.write(b'\x00' * NTT_BUFFER_SIZE)
+        # NTT_RESTORER_BUFFER.write(b'\x00' * NTT_BUFFER_SIZE)
         # Ključ se okreće, RAM je prazan.
-        NTT_RESTORER_BUFFER.close()
-        del NTT_RESTORER_BUFFER
+        # NTT_RESTORER_BUFFER.close()
+        # del NTT_RESTORER_BUFFER
 
     # 3. KONAČNI STEALTH HARDVERSKI UDARAC
     # upotreba direktnih socket impulsa umjesto fstrim adb shell-a
