@@ -36,6 +36,11 @@ import mmap
 import sqlite3
 import io
 import subprocess
+import stat
+import struct
+import collections
+import itertools
+
 from multiprocessing import (
     Process,
     Pool,
@@ -72,9 +77,15 @@ from sympy.ntheory import (
     isprime,
     primefactors
 )
-from pathlib import Path
-from functools import wraps
-from contextlib import contextmanager
+from pathlib import (
+    Path
+)
+from functools import (
+    wraps
+)
+from contextlib import (
+    contextmanager     
+)
 from re import (
     compile,
     search,
@@ -95,11 +106,30 @@ from tenacity import (
     stop_after_attempt,
     wait_fixed
 )
+from collections import (
+    deque
+)
+from itertools import (
+    chain
+)
 
 # eliminacija rezidualnih priljepaka
-if os.path.exists(".ruff_cache"):
-    shutil.rmtree(".ruff_cache", ignore_errors=True)
-
+crna_lista_otpada = [
+    ".ruff_cache",
+    "__pycache__",
+    ".pytest_cache",
+    ".mypy_cache"
+]                     
+for parazit in crna_lista_otpada:
+    if os.path.exists(parazit):
+        if os.path.isdir(parazit):
+            shutil.rmtree(parazit, ignore_errors=True)
+        else:
+            try:
+                os.remove(parazit)
+            except OSError:
+                pass
+                
 try:
     from google import genai
 except ImportError:
@@ -109,7 +139,7 @@ except ImportError:
 # nH! konfiguracija ključa i klijenta
 API_KEY = "                "
 try:
-    v_client = genai.Client(api_key=API_KEY)
+    client = genai.Client(api_key=API_KEY)
 except Exception as e:
     print(f"nH! API error: {e}")
     gc.collect()
@@ -126,17 +156,17 @@ HARMONY_THRESHOLD = 7.7
 BLUE_CURSOR = "\033[94m\u2588\033[0m"
 KREKETANJE_CMD = "play-audio Frogs.mp3 &"
 
+CHUNK_SIZE = 512
+
 stats_q = multiprocessing.Queue()
 term_lock = multiprocessing.Lock()
 
-CHUNK_SIZE = 512
-CHUNK_SIZE = chunk_size
-
+# proširenje: gramatički potprogram za sekunde
 def fmt_vrijeme(t):
     global sek_opis
-    t = int(t)
-    zadnja = t % 10
-    if 11 <= (t % 100) <= 14:
+    t_int = int(t)
+    zadnja = t_int % 10
+    if 11 <= (t_int % 100) <= 14:
         sek_opis = "sekundi"
     elif zadnja == 1:
         sek_opis = "sekunda"
@@ -144,17 +174,58 @@ def fmt_vrijeme(t):
         sek_opis = "sekunde"
     else:
         sek_opis = "sekundi"
-    s = "{:.30f}".format(t)
-    if s.startswith('0.'):
+        
+    s = "{:.50f}".format(t)
+    if s.startswith("0."):
         s = s[1:]
-    if s.endswith('.'):
-        return s.rstrip('0') + '0'
-    return s.rstrip('0')
+    if s.endswith("."):
+        return f"{s.rstrip("0") + "0"} {sek_opis}"
+    return f"{s.rstrip("0")} {sek_opis}"
 
+# proširenje: gramatički potprogram za Henryje (H) nakon pretvorbe
+def fmt_naboj(h):
+    global h_opis
+    h_int int(h)
+    zadnja = h_int % 10
+    if 11 <= (h_int % 100) <= 14:
+        h_opis = "Henryja"
+    elif zadnja == 1:
+        h_opis = "Henry"
+    elif 2 <= zadnja <= 4:
+        h_opis = "Henryja"
+    else:
+        h_opis = "Henryja"
+
+    s = "{:.50f}".format(h)
+    if s.startswith("0."):
+        s = s[1:]
+    if s.endswith("."):
+        return f"{s.rstrip("0") + "0"} {h_opis}"
+    return f"{s.rstrip("0")} {h_opis}"
+
+# proširenje: gramatički potprogram za kapacitet u KB
+def fmt_velicina(kb):
+    global kb_opis
+    kb_int = int(kb)
+    zadnja = kb_int % 10
+    if 11 <= (kb_int % 100) <= 14:
+        kb_opis = "kilobajta"
+    elif zadnja == 1:
+        kb_opis = "kilobajt"
+    elif 2 <= zadnja <= 4:
+        kb_opis = "kilobajta"
+    else:
+        kb_opis = "kilobajta"
+
+    s = "{:.50f}".format(kb)
+    if s.startswith("0."):
+        s = s[1:]
+    if s.endswith("."):
+        return f"{s.rstrip("0") + "0"} {kb_opis}"
+    return f"{s.rstrip("0")} {kb_opis}"
+    
 # --- ZONA 3: nH! STEALTH VERIFIKACIJA ZMAJA (KNOX) ---
-def nH!_verify_stealth_connection(host, port):
-    import socket
-    import subprocess
+def nH_verify_stealth_connection(host, port):
     """Provjera vitalnosti mrežnog prolaza."""
     print(f"Stealth provjera na {host}:{port}...")
     try:
@@ -179,11 +250,11 @@ def nH!_verify_stealth_connection(host, port):
         return False
 
 # --- IZVRŠENJE I KONTROLA ZONE 3 ---
-IS_CONNECTED = nH!_verify_stealth_connection(socket_host, socket_port)
+IS_CONNECTED = nH_verify_stealth_connection(socket_host, socket_port)
 
 with term_lock:
     if IS_CONNECTED:
-        print(f"{BLUE_CURSOR} nH! zmaj Knox je miran. Veza {socket_host}:{socket_port} aktivna.")
+        print(f"{BLUE_CURSOR} nH! zmaj Knox je miran. Aktivna je veza {socket_host}:{socket_port}")
     else:
         print(f"{BLUE_CURSOR} obavijest: Spava zmaj Knox. Pokreni adb pair i adb connect.")
         print(f"{BLUE_CURSOR} status: Port {socket_port} nije dozvolio ulaz u kernel.")
@@ -215,8 +286,8 @@ except ImportError:
         "GOOGLE_MESSAGES": ""
     }
 
-# --- POTPROGRAM ZA STVARANJE MINIMALNIH BUFFERA (512B) ---
-def nH!_prepare_payload(path_key=None, count=1024):
+# --- ZONA 4: STVARANJE PREKLOPLJENIH MINIMALNIH BUFFERA (512B) ---
+def nH_prepare_payload(path_key=None, count=1024):
     # inicijalizacija liste za anonimne bufferiće
     fragments = []
     # izvlačenje naboja iz flash memorije
